@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map Visualization</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+        // Initialize the map with Chicago as the center
+        const map = L.map('map').setView([41.8781, -87.6298], 10); // Chicago's coordinates: latitude 41.8781, longitude -87.6298
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Load the JSON data
+        d3.json('sch.json').then(data => {
+            console.log(data); // Print data to verify it is loaded correctly
+
+            data.forEach(property => {
+                if (property.latitude && property.longitude) {
+                    const popupContent = `
+                        <h3>${property.address}</h3>
+                        <p>Type: ${property.property_type}</p>
+                        <p>Status: ${property.property_status}</p>
+                        <p>Price: $${property.price ? property.price.toLocaleString() : 'N/A'}</p>
+                        <p>Bedrooms: ${property.bedroom_number !== null ? property.bedroom_number : 'N/A'}</p>
+                        <p>Bathrooms: ${property.bathroom_number !== null ? property.bathroom_number : 'N/A'}</p>
+                        <a href="${property.property_url}" target="_blank">View Property</a>
+                    `;
+                    L.marker([property.latitude, property.longitude])
+                        .bindPopup(popupContent)
+                        .addTo(map);
+                }
+            });
+        }).catch(error => {
+            console.error("Error loading the data:", error);
+        });
+    </script>
+</body>
+</html>
