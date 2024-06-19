@@ -1,141 +1,18 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaflet Map Visualization</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        #map {
-            height: 600px;
-            width: 100%;
-        }
-        #controls {
-            margin: 20px;
-        }
-    </style>
+    <title>Real Estate Market Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-    <div id="controls">
-        <label for="price-range">Price Range:</label>
-        <select id="price-range" name="price-range">
-            <option value="0-100000">0 - 100,000</option>
-            <option value="100000-200000">100,000 - 200,000</option>
-            <option value="200000-300000">200,000 - 300,000</option>
-            <option value="300000-400000">300,000 - 400,000</option>
-            <option value="400000-500000">400,000 - 500,000</option>
-            <option value="500000-1000000">500,000 - 1,000,000</option>
-            <option value="1000000-10000000">1,000,000+</option>
-        </select>
-        
-        <label for="bedroom-range">Bedrooms:</label>
-        <select id="bedroom-range" name="bedroom-range">
-            <option value="0-1">0 - 1</option>
-            <option value="1-2">1 - 2</option>
-            <option value="2-3">2 - 3</option>
-            <option value="3-4">3 - 4</option>
-            <option value="4-5">4 - 5</option>
-            <option value="5-10">5+</option>
-        </select>
+    <div id="choropleth-map"></div>
+    <div id="scatter-plot"></div>
+    <div id="bar-chart"></div>
 
-        <label for="bathroom-range">Bathrooms:</label>
-        <select id="bathroom-range" name="bathroom-range">
-            <option value="0-1">0 - 1</option>
-            <option value="1-2">1 - 2</option>
-            <option value="2-3">2 - 3</option>
-            <option value="3-4">3 - 4</option>
-            <option value="4-5">4 - 5</option>
-            <option value="5-10">5+</option>
-        </select>
-        
-        <button id="filter-button">Filter</button>
-    </div>
-    <div id="map"></div>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script>
-        // Initialize the map with Chicago as the center
-        const map = L.map('map').setView([41.8781, -87.6298], 10); // Chicago's coordinates: latitude 41.8781, longitude -87.6298
-
-        // Add OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-
-        // Function to add circle markers to the map
-        function addCircleMarkers(data) {
-            data.forEach(property => {
-                if (property.latitude && property.longitude) {
-                    const radius = property.price ? Math.sqrt(property.price) / 100 : 5;
-                    const color = property.bathroom_number ? getColor(property.bathroom_number) : 'blue';
-                    const popupContent = `
-                        <h3>${property.address}</h3>
-                        <p>Type: ${property.property_type}</p>
-                        <p>Status: ${property.property_status}</p>
-                        <p>Price: $${property.price ? property.price.toLocaleString() : 'N/A'}</p>
-                        <p>Bedrooms: ${property.bedroom_number !== null ? property.bedroom_number : 'N/A'}</p
-                            <p>Bathrooms: ${property.bathroom_number !== null ? property.bathroom_number : 'N/A'}</p>
-                        <a href="${property.property_url}" target="_blank">View Property</a>
-                    `;
-                    L.circleMarker([property.latitude, property.longitude], {
-                        radius: radius,
-                        color: color,
-                        fillOpacity: 0.5
-                    }).bindPopup(popupContent).addTo(map);
-                }
-            });
-        }
-
-        // Function to get color based on the number of bathrooms
-        function getColor(bathrooms) {
-            return bathrooms > 5 ? '#800026' :
-                   bathrooms > 4 ? '#BD0026' :
-                   bathrooms > 3 ? '#E31A1C' :
-                   bathrooms > 2 ? '#FC4E2A' :
-                   bathrooms > 1 ? '#FD8D3C' :
-                   bathrooms > 0 ? '#FEB24C' :
-                                   '#FFEDA0';
-        }
-
-        // Load the JSON data and add circle markers to the map
-        d3.json('sch.json').then(data => {
-            console.log(data); // Print data to verify it is loaded correctly
-
-            // Add event listener for the filter button
-            document.getElementById('filter-button').addEventListener('click', () => {
-                const priceRange = document.getElementById('price-range').value.split('-');
-                const bedroomRange = document.getElementById('bedroom-range').value.split('-');
-                const bathroomRange = document.getElementById('bathroom-range').value.split('-');
-
-                const minPrice = parseFloat(priceRange[0]);
-                const maxPrice = parseFloat(priceRange[1]);
-                const minBedrooms = parseFloat(bedroomRange[0]);
-                const maxBedrooms = parseFloat(bedroomRange[1]);
-                const minBathrooms = parseFloat(bathroomRange[0]);
-                const maxBathrooms = parseFloat(bathroomRange[1]);
-
-                const filteredData = data.filter(property => 
-                    property.price >= minPrice && property.price <= maxPrice &&
-                    property.bedroom_number >= minBedrooms && property.bedroom_number <= maxBedrooms &&
-                    property.bathroom_number >= minBathrooms && property.bathroom_number <= maxBathrooms
-                );
-
-                // Remove existing markers
-                map.eachLayer(layer => {
-                    if (layer instanceof L.CircleMarker) {
-                        map.removeLayer(layer);
-                    }
-                });
-
-                // Add filtered circle markers
-                addCircleMarkers(filteredData);
-            });
-
-            // Initially add all circle markers
-            addCircleMarkers(data);
-        }).catch(error => {
-            console.error("Error loading the data:", error);
-        });
-    </script>
+    <script src="Script.js"></script>
 </body>
 </html>
