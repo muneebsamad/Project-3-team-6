@@ -7,7 +7,7 @@ The real estate market is subject to various influences that can affect property
 - How do household income brackets correlate with house values in different regions?
 - What is the relationship between house sizes (measured by the number of bedrooms and bathrooms) and their price ranges?
 - How does weather influence home sales and market activity?
-- 
+
 However, analyzing these relationships poses several challenges:
 
 - The dataset includes over 600K rows of home sales data from 2022, with significant variation across states and regions.
