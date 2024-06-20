@@ -1,3 +1,5 @@
+![image](https://github.com/muneebsamad/Project-3-team-6/assets/161100536/fae179ce-dd7f-4330-b8bc-cc36957cfb3d)
+
 # Introduction
 The real estate market is a dynamic and multifaceted sector, influenced by various factors such as economic conditions, demographics, and increasingly, environmental elements. As potential homebuyers, real estate investors, and climate researchers navigate this complex landscape, understanding the interplay between these factors becomes crucial. Our project aims to provide insights into specific relationships within the housing market, focusing on income brackets for households versus house values, the correlation between house sizes (i.e., bed and bath counts) and price ranges, and the impact of weather on home sales. By leveraging a comprehensive dataset of home sales in 2022 and integrating weather data, we aim to create informative visualizations to aid decision-making and research in these areas.
 
