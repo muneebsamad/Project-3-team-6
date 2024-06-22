@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaflet Map Visualization</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>Mapbox GL JS Map with 3D Buildings</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
     <style>
         #map {
             height: 600px;
@@ -51,42 +51,80 @@
         <button id="filter-button">Filter</button>
     </div>
     <div id="map"></div>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script>
-        // Initialize the map with Chicago as the center
-        const map = L.map('map').setView([41.8781, -87.6298], 10); // Chicago's coordinates: latitude 41.8781, longitude -87.6298
+        mapboxgl.accessToken = 'pk.eyJ1IjoibXVuc2FtODgiLCJhIjoiY2x4ZHc3eTE3MGFoeDJrcHQzMzlzcW9maiJ9.ZVIxW6Z7az4bKSU-4S8nyA';
+        
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/munsam88/clxdwj8mh009801qj89y51l8r',
+            center: [-87.6298, 41.8781], // Chicago coordinates
+            zoom: 10,
+            pitch: 60, // Pitch in degrees (0 is straight down, 60 is a tilted view)
+            bearing: -15 // Bearing in degrees (0 is north, 90 is east, -90 is west)
+        });
 
-        // Add OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        map.on('load', function () {
+            map.addLayer({
+                'id': '3d-buildings',
+                'source': 'composite',
+                'source-layer': 'building',
+                'filter': ['==', 'extrude', 'true'],
+                'type': 'fill-extrusion',
+                'minzoom': 15,
+                'paint': {
+                    'fill-extrusion-color': '#aaa',
+                    'fill-extrusion-height': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        15,
+                        0,
+                        15.05,
+                        ['get', 'height']
+                    ],
+                    'fill-extrusion-base': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        15,
+                        0,
+                        15.05,
+                        ['get', 'min_height']
+                    ],
+                    'fill-extrusion-opacity': 0.6
+                }
+            });
+        });
 
-        // Function to add circle markers to the map
-        function addCircleMarkers(data) {
+        function addMarkers(data) {
             data.forEach(property => {
                 if (property.latitude && property.longitude) {
-                    const radius = property.price ? Math.sqrt(property.price) / 100 : 5;
-                    const color = property.bathroom_number ? getColor(property.bathroom_number) : 'blue';
+                    const el = document.createElement('div');
+                    el.className = 'marker';
+                    el.style.backgroundColor = property.bathroom_number ? getColor(property.bathroom_number) : 'blue';
+                    el.style.width = '20px';
+                    el.style.height = '20px';
+                    el.style.borderRadius = '50%';
+
                     const popupContent = `
                         <h3>${property.address}</h3>
                         <p>Type: ${property.property_type}</p>
                         <p>Status: ${property.property_status}</p>
                         <p>Price: $${property.price ? property.price.toLocaleString() : 'N/A'}</p>
-                        <p>Bedrooms: ${property.bedroom_number !== null ? property.bedroom_number : 'N/A'}</p
-                            <p>Bathrooms: ${property.bathroom_number !== null ? property.bathroom_number : 'N/A'}</p>
+                        <p>Bedrooms: ${property.bedroom_number !== null ? property.bedroom_number : 'N/A'}</p>
+                        <p>Bathrooms: ${property.bathroom_number !== null ? property.bathroom_number : 'N/A'}</p>
                         <a href="${property.property_url}" target="_blank">View Property</a>
                     `;
-                    L.circleMarker([property.latitude, property.longitude], {
-                        radius: radius,
-                        color: color,
-                        fillOpacity: 0.5
-                    }).bindPopup(popupContent).addTo(map);
+                    new mapboxgl.Marker(el)
+                        .setLngLat([property.longitude, property.latitude])
+                        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent))
+                        .addTo(map);
                 }
             });
         }
 
-        // Function to get color based on the number of bathrooms
         function getColor(bathrooms) {
             return bathrooms > 5 ? '#800026' :
                    bathrooms > 4 ? '#BD0026' :
@@ -97,11 +135,9 @@
                                    '#FFEDA0';
         }
 
-        // Load the JSON data and add circle markers to the map
         d3.json('sch.json').then(data => {
-            console.log(data); // Print data to verify it is loaded correctly
+            console.log(data);
 
-            // Add event listener for the filter button
             document.getElementById('filter-button').addEventListener('click', () => {
                 const priceRange = document.getElementById('price-range').value.split('-');
                 const bedroomRange = document.getElementById('bedroom-range').value.split('-');
@@ -120,19 +156,12 @@
                     property.bathroom_number >= minBathrooms && property.bathroom_number <= maxBathrooms
                 );
 
-                // Remove existing markers
-                map.eachLayer(layer => {
-                    if (layer instanceof L.CircleMarker) {
-                        map.removeLayer(layer);
-                    }
-                });
+                document.querySelectorAll('.marker').forEach(marker => marker.remove());
 
-                // Add filtered circle markers
-                addCircleMarkers(filteredData);
+                addMarkers(filteredData);
             });
 
-            // Initially add all circle markers
-            addCircleMarkers(data);
+            addMarkers(data);
         }).catch(error => {
             console.error("Error loading the data:", error);
         });
