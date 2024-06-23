@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Prices to Income Visualization</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+                .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #map {
+            height: 600px;
+            width: 70%;
+        }
+        #controls {
+            margin: 20px;
+        }
+    </style>
+</head>
+<br>
+<body>
+    <div class="container">
+        <div class="row">
+          <div class="col-md-12 p-5 text-center bg-light">
+            <h1>Income vs Home Prices</h1>
+            <p>Use the filters below to explore the dataset</p>
+          </div>
+        </div>
+    <div id="controls">
+
+        <label for="state_name">State:</label>
+        <select id="state_name" name="state_name">
+            <option value="California">California</option>
+            <option value="Washington">Washington</option>
+            <option value="Colorado">Colorado</option>
+            <option value="Alaska">Alaska</option>
+            <option value="New Mexico">New Mexico</option>
+            <option value="Arkansas">Arkansas</option>
+            <option value="Idaho">Idaho</option>
+            <option value="Louisiana">Louisiana</option>
+        </select>
+
+        <label for="income-range">Income Range:</label>
+        <select id="income-range" name="income-range">
+            <option value="0-20000"> 0 - 20,000</option>
+            <option value="20000-50000">20,000 - 50,000</option>
+            <option value="50000-80000">50,000 - 80,000</option>
+            <option value="80000-110000">80,000 - 110,000</option>
+            <option value="110000-140000">110,000 - 140,000</option>
+            <option value="140000-1700000">140,000 - 170,000</option>
+            <option value="1700000-10000000">170,000 +</option>
+            <!-- <option value="0-10000000">All</option> -->
+        </select>
+        
+        <button id="filter-button">Filter</button>
+    </div>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+        // Initialize the map with Chicago as the center
+        let map = L.map('map').setView([41.8781, -87.6298], 10); // Chicago's coordinates: latitude 41.8781, longitude -87.6298
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Load the JSON data and add circle markers to the map
+        d3.json('incomevsprice.json').then(data => {
+            console.log(data); // Print data to verify it is loaded correctly
+            const stateCoordinates = {
+                "California": [36.7783, -119.4179],
+                "Washington": [47.7511, -120.7401],
+                "Colorado": [39.5501, -105.7821],
+                "Alaska": [64.2008, -149.4937],
+                "New Mexico": [34.5199, -105.8701],
+                "Arkansas": [34.7465, -92.2896],
+                "Idaho": [44.0682, -114.7420],
+                "Louisiana": [30.9843, -91.9623]
+            };
+
+            const incomeRanges = {
+                "0-20000": [0,20000],
+                "20000-50000": [20000,50000],
+                "50000-80000": [50000,80000],
+                "80000-110000": [80000,110000],
+                "110000-140000": [110000,140000],
+                "140000-170000": [140000,100000000],
+                "170000+": [170000,10000000000]
+                // "0-10000000000": [0,10000000000]
+            }
+            // Add event listener for the filter button
+            document.getElementById('filter-button').addEventListener('click', () => {
+                const selectedState = document.getElementById('state_name').value;
+                const selectedIncomeRange = document.getElementById('income-range').value;
+
+                console.log(selectedIncomeRange);
+                console.log(selectedState);
+                console.log(selectedIncomeRange[0]);
+                console.log(data);
+                console.log(incomeRanges[selectedIncomeRange]);
+
+                let filteredData = data.filter(d=> d.state_name === selectedState && d["Average Income"] >= incomeRanges[selectedIncomeRange][0] && 
+                d["Average Income"] <= incomeRanges[selectedIncomeRange][1]);
+            
+
+                console.log(filteredData);
+                // Remove existing markers
+                map.eachLayer(layer => {
+                    if (layer instanceof L.CircleMarker) {
+                        map.removeLayer(layer);
+                    }
+                });
+
+                // Add filtered circle markers
+                filteredData.forEach(d=> {
+                    console.log(d);
+                    let percentage = d["Price to Income Ratio"]
+                    let markersize = percentage*0.75
+                    let range = d["Income Range"]
+                    let markercolor = range
+                    switch (range) {
+                        case "0-20000":
+                            markercolor = "#2ca25f";
+                            break;
+                        case "20000-50000":
+                            markercolor = "#ffeda0";
+                            break;
+                        case "50000-80000":
+                            markercolor = "#fe9929";
+                            break;
+                        case "80000-110000":
+                            markercolor = "#fc4e2a";
+                            break;
+                        case "110000-140000":
+                            markercolor = "#bd0026";
+                            break;
+                        case "140000-170000":
+                            markercolor = "#67000d";
+                            break;
+                        case "170000+":
+                            markercolor = "#67000d";
+                            break;
+                        default:
+                            markercolor = "#67000d";
+                    }
+
+                    let circle = L.circleMarker([d.lat, d.lng], {
+                        radius: markersize,
+                        color: markercolor,
+                        fillColor: markercolor,
+                        fillOpacity: 0.8
+
+                    }).addTo(map);
+                    // Add hover events
+                    circle.bindPopup(`<b>City:</b> ${d["city"]}<br><b>State:</b> ${d["state_name"]}<br><b>Average Salary Income:</b> $${d["Average Income"]}<br><b>Average Home Price:</b>$${d["Average Price"]}<br><b>Price to Income Ratio:</b> ${d["Price to Income Ratio"]}`);
+
+                    // Show popup on mouseover
+                    circle.on('mouseover', function (e) {
+                        this.openPopup();
+                    });
+
+                    // Close popup on mouseout
+                    circle.on('mouseout', function (e) {
+                        this.closePopup();
+                    });
+                    if (stateCoordinates[selectedState]) {
+                        map.setView(stateCoordinates[selectedState], 6);
+                    };
+                    });
+            })       
+            }).catch(error => {
+                console.error("Error loading the data:", error);
+        });
+
+
+    </script>
+<div id="graph1"></div> <!-- This is where your first graph might be displayed -->
+</body>
+</html>
