@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real Estate Data Visualization</title>
+    <style>
+        /* CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .chart {
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            font-size: 11px;
+        }
+
+        .bar {
+            fill: steelblue;
+        }
+
+        .box {
+            fill: #69b3a2;
+            stroke: #000;
+            stroke-width: 1px;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center;">Real Estate Data Visualization</h2>
+
+    <!-- Agency Performance Chart -->
+    <div id="agencyPerformanceChart" class="chart"></div>
+
+    <!-- Average Real Estate Price Comparison Chart -->
+    <svg id="averageRealEstatePriceChart" class="chart"></svg>
+
+    <!-- D3.js library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // Function to fetch data from sch.json file
+        async function fetchData() {
+            try {
+                const response = await fetch('sch.json');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                throw error;
+            }
+        }
+
+        // Function to analyze and visualize data
+        async function analyzeData() {
+            try {
+                const data = await fetchData();
+                console.log(data); // Check data in console
+
+                // Now `data` is an array of objects, each representing a row from the JSON
+
+                // Render visualizations
+                renderAgencyPerformance(data);
+                renderAverageRealEstatePrice(data);
+
+            } catch (error) {
+                console.error('Error analyzing data:', error);
+                // Handle errors gracefully
+            }
+        }
+
+        // Helper function to render Agency Performance (Box Plot) using D3.js
+        function renderAgencyPerformance(data) {
+            const agencies = [...new Set(data.map(entry => entry['agency_name']))]; // Assuming 'agency_name' is the key for agency name
+            const topAgencies = agencies.slice(0, 3); // Top 3 agencies by transaction volume
+            const agencyData = topAgencies.map(agency => {
+                const agencyTransactions = data.filter(entry => entry['agency_name'] === agency);
+                const prices = agencyTransactions.map(entry => entry['price']); // Assuming 'price' is the key for transaction price
+                return prices;
+            });
+            const svg = d3.select('#agencyPerformanceChart')
+                .append('svg')
+                .attr('width', 600)
+                .attr('height', 300);
+
+            const margin = {top: 10, right: 30, bottom: 30, left: 40};
+            const width = +svg.attr('width') - margin.left - margin.right;
+            const height = +svg.attr('height') - margin.top - margin.bottom;
+
+            const x = d3.scaleBand()
+                .domain(topAgencies)
+                .rangeRound([margin.left, width - margin.right])
+                .paddingInner(0.1);
+
+            const y = d3.scaleLinear()
+                .domain([d3.min(agencyData.flat()), d3.max(agencyData.flat())])
+                .rangeRound([height - margin.bottom, margin.top]);
+
+            svg.append('g')
+                .attr('transform', `translate(0,${height - margin.bottom})`)
+                .call(d3.axisBottom(x));
+
+            svg.append('g')
+                .attr('transform', `translate(${margin.left},0)`)
+                .call(d3.axisLeft(y));
+
+            svg.selectAll('.box')
+                .data(agencyData)
+                .enter().append('rect')
+                .attr('class', 'box')
+                .attr('x', (d, i) => x(topAgencies[i]))
+                .attr('y', d => y(d3.max(d)))
+                .attr('width', x.bandwidth())
+                .attr('height', d => y(d3.min(d)) - y(d3.max(d)));
+
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height + 30)
+                .style('text-anchor', 'middle')
+                .text('Agency Name');
+
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -height / 2)
+                .attr('y', -30)
+                .style('text-anchor', 'middle')
+                .text('Transaction Price');
+        }
+
+        // Helper function to render Average Real Estate Price Comparison using D3.js
+        function renderAverageRealEstatePrice(data) {
+            // Calculate average prices per city
+            const cityPrices = d3.rollup(data,
+                v => d3.mean(v, d => d.price),
+                d => d.city
+            );
+
+            // Convert map to array for easier sorting and manipulation
+            const cityPriceArray = Array.from(cityPrices, ([city, avgPrice]) => ({ city, avgPrice }));
+
+            // Sort cities by average price descending
+            cityPriceArray.sort((a, b) => b.avgPrice - a.avgPrice);
+
+            const margin = {top: 20, right: 30, bottom: 30, left: 150};
+            const width = 800 - margin.left - margin.right;
+            const height = Math.max(400, cityPriceArray.length * 30);
+
+            const x = d3.scaleLinear()
+                .domain([0, d3.max(cityPriceArray, d => d.avgPrice)])
+                .nice()
+                .range([0, width]);
+
+            const y = d3.scaleBand()
+                .domain(cityPriceArray.map(d => d.city))
+                .range([0, height])
+                .padding(0.1);
+
+            const xAxis = d3.axisBottom(x);
+            const yAxis = d3.axisLeft(y);
+
+            const svg = d3.select('#averageRealEstatePriceChart')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            svg.append('g')
+                .attr('class', 'axis axis--x')
+                .attr('transform', `translate(0,${height})`)
+                .call(xAxis);
+
+            svg.append('g')
+                .attr('class', 'axis axis--y')
+                .call(yAxis);
+
+            svg.selectAll('.bar')
+                .data(cityPriceArray)
+                .enter().append('rect')
+                .attr('class', 'bar')
+                .attr('x', 0)
+                .attr('y', d => y(d.city))
+                .attr('width', d => x(d.avgPrice))
+                .attr('height', y.bandwidth());
+
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height + 30)
+                .style('text-anchor', 'middle')
+                .text('Average Price');
+
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -height / 2)
+                .attr('y', -30)
+                .style('text-anchor', 'middle')
+                .text('City');
+        }
+
+        // Call analyzeData function to initiate data analysis and visualization
+        analyzeData();
+    </script>
+</body>
+</html>
