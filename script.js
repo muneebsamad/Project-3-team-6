@@ -1,7 +1,7 @@
 // Function to fetch data from realestate_data.json file
 async function fetchData() {
     try {
-        const data = await d3.json('realestate_data.json');
+        const data = await d3.json('sch.json');
         return data;
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -29,7 +29,6 @@ async function analyzeData() {
 // Helper function to render Price Distribution (Histogram) using D3.js
 function renderPriceDistribution(data) {
     const prices = data.map(entry => entry['TransactionPrice']);
-
     const histogram = d3.histogram()
         .value(d => d)
         .domain(d3.extent(prices))
