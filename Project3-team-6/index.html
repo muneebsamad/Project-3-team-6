@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox GL JS Map with 3D Buildings</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        #controls {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <label for="price-range">Price Range:</label>
+        <select id="price-range" name="price-range">
+            <option value="0-100000">0 - 100,000</option>
+            <option value="100000-200000">100,000 - 200,000</option>
+            <option value="200000-300000">200,000 - 300,000</option>
+            <option value="300000-400000">300,000 - 400,000</option>
+            <option value="400000-500000">400,000 - 500,000</option>
+            <option value="500000-1000000">500,000 - 1,000,000</option>
+            <option value="1000000-10000000">1,000,000+</option>
+        </select>
+        
+        <label for="bedroom-range">Bedrooms:</label>
+        <select id="bedroom-range" name="bedroom-range">
+            <option value="0-1">0 - 1</option>
+            <option value="1-2">1 - 2</option>
+            <option value="2-3">2 - 3</option>
+            <option value="3-4">3 - 4</option>
+            <option value="4-5">4 - 5</option>
+            <option value="5-10">5+</option>
+        </select>
+
+        <label for="bathroom-range">Bathrooms:</label>
+        <select id="bathroom-range" name="bathroom-range">
+            <option value="0-1">0 - 1</option>
+            <option value="1-2">1 - 2</option>
+            <option value="2-3">2 - 3</option>
+            <option value="3-4">3 - 4</option>
+            <option value="4-5">4 - 5</option>
+            <option value="5-10">5+</option>
+        </select>
+        
+        <button id="filter-button">Filter</button>
+    </div>
+    <div id="map"></div>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoibXVuc2FtODgiLCJhIjoiY2x4ZHc3eTE3MGFoeDJrcHQzMzlzcW9maiJ9.ZVIxW6Z7az4bKSU-4S8nyA';
+        
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/munsam88/clxdwj8mh009801qj89y51l8r',
+            center: [-87.6298, 41.8781], // Chicago coordinates
+            zoom: 10,
+            pitch: 60, // Pitch in degrees (0 is straight down, 60 is a tilted view)
+            bearing: -15 // Bearing in degrees (0 is north, 90 is east, -90 is west)
+        });
+
+        map.on('load', function () {
+            map.addLayer({
+                'id': '3d-buildings',
+                'source': 'composite',
+                'source-layer': 'building',
+                'filter': ['==', 'extrude', 'true'],
+                'type': 'fill-extrusion',
+                'minzoom': 15,
+                'paint': {
+                    'fill-extrusion-color': '#aaa',
+                    'fill-extrusion-height': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        15,
+                        0,
+                        15.05,
+                        ['get', 'height']
+                    ],
+                    'fill-extrusion-base': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        15,
+                        0,
+                        15.05,
+                        ['get', 'min_height']
+                    ],
+                    'fill-extrusion-opacity': 0.6
+                }
+            });
+        });
+
+        function addMarkers(data) {
+            data.forEach(property => {
+                if (property.latitude && property.longitude) {
+                    const el = document.createElement('div');
+                    el.className = 'marker';
+                    el.style.backgroundColor = property.bathroom_number ? getColor(property.bathroom_number) : 'blue';
+                    el.style.width = '20px';
+                    el.style.height = '20px';
+                    el.style.borderRadius = '50%';
+
+                    const popupContent = `
+                        <h3>${property.address}</h3>
+                        <p>Type: ${property.property_type}</p>
+                        <p>Status: ${property.property_status}</p>
+                        <p>Price: $${property.price ? property.price.toLocaleString() : 'N/A'}</p>
+                        <p>Bedrooms: ${property.bedroom_number !== null ? property.bedroom_number : 'N/A'}</p>
+                        <p>Bathrooms: ${property.bathroom_number !== null ? property.bathroom_number : 'N/A'}</p>
+                        <a href="${property.property_url}" target="_blank">View Property</a>
+                    `;
+                    new mapboxgl.Marker(el)
+                        .setLngLat([property.longitude, property.latitude])
+                        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent))
+                        .addTo(map);
+                }
+            });
+        }
+
+        function getColor(bathrooms) {
+            return bathrooms > 5 ? '#800026' :
+                   bathrooms > 4 ? '#BD0026' :
+                   bathrooms > 3 ? '#E31A1C' :
+                   bathrooms > 2 ? '#FC4E2A' :
+                   bathrooms > 1 ? '#FD8D3C' :
+                   bathrooms > 0 ? '#FEB24C' :
+                                   '#FFEDA0';
+        }
+
+        d3.json('sch.json').then(data => {
+            console.log(data);
+
+            document.getElementById('filter-button').addEventListener('click', () => {
+                const priceRange = document.getElementById('price-range').value.split('-');
+                const bedroomRange = document.getElementById('bedroom-range').value.split('-');
+                const bathroomRange = document.getElementById('bathroom-range').value.split('-');
+
+                const minPrice = parseFloat(priceRange[0]);
+                const maxPrice = parseFloat(priceRange[1]);
+                const minBedrooms = parseFloat(bedroomRange[0]);
+                const maxBedrooms = parseFloat(bedroomRange[1]);
+                const minBathrooms = parseFloat(bathroomRange[0]);
+                const maxBathrooms = parseFloat(bathroomRange[1]);
+
+                const filteredData = data.filter(property => 
+                    property.price >= minPrice && property.price <= maxPrice &&
+                    property.bedroom_number >= minBedrooms && property.bedroom_number <= maxBedrooms &&
+                    property.bathroom_number >= minBathrooms && property.bathroom_number <= maxBathrooms
+                );
+
+                document.querySelectorAll('.marker').forEach(marker => marker.remove());
+
+                addMarkers(filteredData);
+            });
+
+            addMarkers(data);
+        }).catch(error => {
+            console.error("Error loading the data:", error);
+        });
+    </script>
+</body>
+</html>
