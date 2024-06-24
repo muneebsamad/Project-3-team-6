@@ -39,16 +39,16 @@ To address our research questions, we implemented the following steps:
  # Limitations
   While our analysis provides meaningful insights, several limitations must be acknowledged:
 
--The dataset's focus on a single year (2022) may not capture long-term trends or market fluctuations.
--The authenticity and validity of the data, sourced from Kaggle, could affect the reliability of our conclusions.
--The absence of household income data required reliance on external general sources, which may not perfectly align with our dataset.
--Ethical considerations regarding the privacy of real estate transaction data and ensuring unbiased representation across all states were paramount in our analysis.
+- The dataset's focus on a single year (2022) may not capture long-term trends or market fluctuations.
+- The authenticity and validity of the data, sourced from Kaggle, could affect the reliability of our conclusions.
+- The absence of household income data required reliance on external general sources, which may not perfectly align with our dataset.
+- Ethical considerations regarding the privacy of real estate transaction data and ensuring unbiased representation across all states were paramount in our analysis.
 
 # Future Scope
   To enhance our analysis and broaden its applicability, future work could include:
--Incorporating additional factors such as crime rates, economic indicators, and population density.
--Expanding the dataset to include multiple years and more countries, offering a global perspective.
--Utilizing more columns in the existing dataset, such as house size and acre lot, for deeper insights.
+- Incorporating additional factors such as crime rates, economic indicators, and population density.
+- Expanding the dataset to include multiple years and more countries, offering a global perspective.
+- Utilizing more columns in the existing dataset, such as house size and acre lot, for deeper insights.
 
 # Conclusion
   Our project aims to demystify the complex relationships within the real estate market, offering valuable insights to homebuyers, investors, and researchers. By combining robust data analysis with dynamic visualizations, we hope to empower stakeholders with the     information needed to make informed decisions and foster a deeper understanding of the market's multifaceted nature.
