@@ -32,9 +32,9 @@ To address our research questions, we implemented the following steps:
 
 # Findings and Visualizations
  
- -Income Brackets vs. House Values: Our visualizations illustrate how different income brackets align with property values across various regions, helping potential homebuyers and investors identify affordable or high-value areas.
- -House Sizes vs. Price Ranges: Analyzing the relationship between house sizes and price ranges revealed distinct patterns, aiding in understanding market segmentation and pricing strategies.
- -Weather Impact on Home Sales: The integration of weather data highlighted how climatic conditions affect home sales, providing valuable insights for climate researchers and market analysts.
+ - Income Brackets vs. House Values: Our visualizations illustrate how different income brackets align with property values across various regions, helping potential homebuyers and investors identify affordable or high-value areas.
+ - House Sizes vs. Price Ranges: Analyzing the relationship between house sizes and price ranges revealed distinct patterns, aiding in understanding market segmentation and pricing strategies.
+ - Weather Impact on Home Sales: The integration of weather data highlighted how climatic conditions affect home sales, providing valuable insights for climate researchers and market analysts.
   
  # Limitations
   While our analysis provides meaningful insights, several limitations must be acknowledged:
