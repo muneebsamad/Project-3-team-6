@@ -33,10 +33,8 @@ To address our research questions, we implemented the following steps:
 # Findings and Visualizations
  
  -Income Brackets vs. House Values: Our visualizations illustrate how different income brackets align with property values across various regions, helping potential homebuyers and investors identify affordable or high-value areas.
-  
  -House Sizes vs. Price Ranges: Analyzing the relationship between house sizes and price ranges revealed distinct patterns, aiding in understanding market segmentation and pricing strategies.
-  
--Weather Impact on Home Sales: The integration of weather data highlighted how climatic conditions affect home sales, providing valuable insights for climate researchers and market analysts.
+ -Weather Impact on Home Sales: The integration of weather data highlighted how climatic conditions affect home sales, providing valuable insights for climate researchers and market analysts.
   
  # Limitations
   While our analysis provides meaningful insights, several limitations must be acknowledged:
@@ -48,7 +46,6 @@ To address our research questions, we implemented the following steps:
 
 # Future Scope
   To enhance our analysis and broaden its applicability, future work could include:
-
 -Incorporating additional factors such as crime rates, economic indicators, and population density.
 -Expanding the dataset to include multiple years and more countries, offering a global perspective.
 -Utilizing more columns in the existing dataset, such as house size and acre lot, for deeper insights.
